@@ -9,10 +9,10 @@ RequestExecutionLevel user
 Name "${packageName}.exe"
 ShowInstDetails nevershow
 SilentInstall normal
-OutFile "..\..\dist\${packageName}.exe"
+OutFile "/*output*/"
 InstallDir "$TEMP\${packageName}"
 Icon "..\..\ico\default-gba.ico"
-BrandingText "David Vandensteen - 2022"
+BrandingText "Created with Retro Win Packer"
 AutocloseWindow True
 
 Section "install"
