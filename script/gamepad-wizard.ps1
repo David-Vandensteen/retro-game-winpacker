@@ -43,6 +43,37 @@ function Debug {
   }
 }
 
+function Watch-Controler {
+  Param(
+    [Parameter(Mandatory=$true)][int] $ControlerIndex
+    # TODO StopAndReturnTrigger
+  )
+  $dwUserIndex = $ControlerIndex
+  $currentState = New-Object XInputWrapper+XINPUT_STATE
+  [XInputWrapper]::XInputGetState($dwUserIndex, [ref]$currentState)
+
+  if ($currentState -ne $previousState) {
+    Write-Host "Controller event detected!"
+
+    if ($currentState.wButtons -ne $previousState.wButtons) { Write-Host "Buttons: $($currentState.wButtons)" }
+
+    if ($currentState.bLeftTrigger -ne $previousState.bLeftTrigger) { Write-Host "Left Trigger: $($currentState.bLeftTrigger)" }
+    if ($currentState.bRightTrigger -ne $previousState.bRightTrigger) { Write-Host "Right Trigger: $($currentState.bRightTrigger)" }
+
+    if ($currentState.sThumbLX -ne $previousState.sThumbLX) { Write-Host "Left Thumb X: $($currentState.sThumbLX)" }
+    if ($currentState.sThumbLY -ne $previousState.sThumbLY) { Write-Host "Left Thumb Y: $($currentState.sThumbLY)" }
+
+    if ($currentState.sThumbRX -ne $previousState.sThumbRX) { Write-Host "Right Thumb X: $($currentState.sThumbRX)" }
+    if ($currentState.sThumbRY -ne $previousState.sThumbRY) { Write-Host "Right Thumb Y: $($currentState.sThumbRY)" }
+
+    $previousState = $currentState
+  }
+
+  Start-Sleep -Milliseconds 100
+  Watch-Controler -ControlerIndex $ControlerIndex
+}
+
+
 function Get-ConnectedIndexControler {
   $dwUserIndex = 0
 
@@ -59,10 +90,14 @@ function Get-ConnectedIndexControler {
 function Main {
   $controlerIndex = Get-ConnectedIndexControler
   Write-Host "controler index $controlerIndex is connected"
+
+  $previousState = New-Object XInputWrapper+XINPUT_STATE
+  #MonitorControllerEvents
+  Watch-Controler -ControlerIndex $controlerIndex
 }
 
-#Main
-Debug
+Main
+#Debug
 
 
 #Joy0_Up=288
