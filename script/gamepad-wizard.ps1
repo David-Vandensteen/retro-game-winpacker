@@ -43,21 +43,26 @@ function Debug {
   }
 }
 
-function Watch-Controller {
+function Get-Control {
   Param(
-    [Parameter(Mandatory=$true)][int] $ControllerIndex
-    # TODO StopAndReturnTrigger
+    [Parameter(Mandatory=$true)][int] $ControllerIndex,
+    [int] $Delay = 100
   )
+
+  $buttonValues = @{}
   $dwUserIndex = $ControllerIndex
   $currentState = New-Object XInputWrapper+XINPUT_STATE
   [XInputWrapper]::XInputGetState($dwUserIndex, [ref]$currentState)
 
   if ($currentState -ne $previousState) {
-    Write-Host "Controller event detected!"
+    if ($currentState.wButtons -ne $previousState.wButtons) {
+      $buttonValues["wButtons"] = $currentState.wButtons
+      return $buttonValues
+    }
 
-    if ($currentState.wButtons -ne $previousState.wButtons) { Write-Host "Buttons: $($currentState.wButtons)" }
-
-    if ($currentState.bLeftTrigger -ne $previousState.bLeftTrigger) { Write-Host "Left Trigger: $($currentState.bLeftTrigger)" }
+    if ($currentState.bLeftTrigger -ne $previousState.bLeftTrigger) {
+      Write-Host "Left Trigger: $($currentState.bLeftTrigger)"
+    }
     if ($currentState.bRightTrigger -ne $previousState.bRightTrigger) { Write-Host "Right Trigger: $($currentState.bRightTrigger)" }
 
     if ($currentState.sThumbLX -ne $previousState.sThumbLX) { Write-Host "Left Thumb X: $($currentState.sThumbLX)" }
@@ -69,10 +74,9 @@ function Watch-Controller {
     $previousState = $currentState
   }
 
-  Start-Sleep -Milliseconds 100
-  Watch-Controller -ControllerIndex $ControllerIndex
+  Start-Sleep -Milliseconds $Delay
+  Get-Control -ControllerIndex $ControllerIndex
 }
-
 
 function Get-ConnectedIndexController {
   $dwUserIndex = 0
@@ -83,17 +87,19 @@ function Get-ConnectedIndexController {
   if ($result -eq 0) {
     return $dwUserIndex
   } else {
-    throw "controler is not connected"
+    throw "controller is not connected"
   }
 }
 
 function Main {
   $controllerIndex = Get-ConnectedIndexController
-  Write-Host "controler index $controlerIndex is connected"
+  Write-Host "controller index $controlerIndex is connected"
 
   $previousState = New-Object XInputWrapper+XINPUT_STATE
-  #MonitorControllerEvents
-  Watch-Controller -ControllerIndex $controllerIndex
+  $control = Get-Control -ControllerIndex $controllerIndex
+
+  Write-Host "control"
+  $control.wButtons
 }
 
 Main
