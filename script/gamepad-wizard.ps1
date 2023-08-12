@@ -1,3 +1,5 @@
+# TODO : waiting max value for analog control
+
 Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
@@ -21,23 +23,23 @@ public class XInputWrapper {
 '@
 
 function Debug {
-  # Numéro de l'utilisateur (0-3) pour le contrôleur
-  $dwUserIndex = 0
+  Param([Parameter(Mandatory=$true)][int] $ControllerIndex)
 
+  $dwUserIndex = $ControllerIndex
   $state = New-Object XInputWrapper+XINPUT_STATE
   $result = [XInputWrapper]::XInputGetState($dwUserIndex, [ref] $state)
 
   if ($result -eq 0) {
     Write-Host "Controleur connecte."
-    Write-Host "Buttons: $($state.wButtons)"
-    Write-Host "Left Trigger: $($state.bLeftTrigger)"
-    Write-Host "Right Trigger: $($state.bRightTrigger)"
-    Write-Host "Left Thumb X: $($state.sThumbLX)"
-    Write-Host "Left Thumb Y: $($state.sThumbLY)"
-    Write-Host "Right Thumb X: $($state.sThumbRX)"
-    Write-Host "Right Thumb Y: $($state.sThumbRY)"
+    Write-Host "wButtons: $($state.wButtons)"
+    Write-Host "bLeftTrigger: $($state.bLeftTrigger)"
+    Write-Host "bRightTrigger: $($state.bRightTrigger)"
+    Write-Host "sThumbLX: $($state.sThumbLX)"
+    Write-Host "sThumbLY: $($state.sThumbLY)"
+    Write-Host "sThumbRX: $($state.sThumbRX)"
+    Write-Host "sThumbRY: $($state.sThumbRY)"
     sleep 1
-    Debug
+    Debug -ControllerIndex $ControllerIndex
   } else {
     Write-Host "Le controleur n est pas connecte."
   }
@@ -50,10 +52,14 @@ function Get-Control {
   )
 
   $change = @{}
-  $dwUserIndex = $ControllerIndex
+  $dwUserIndex = $ControWllerIndex
   $currentState = New-Object XInputWrapper+XINPUT_STATE
+
+
+  $previousState = $currentState
   [XInputWrapper]::XInputGetState($dwUserIndex, [ref]$currentState)
 
+  #if (($currentState.bLeftTrigger -ne -3356) -and ($currentState.))
   if ($currentState -ne $previousState) {
     if ($currentState.wButtons -ne $previousState.wButtons) {
       $change["wButtons"] = $currentState.wButtons
@@ -97,24 +103,65 @@ function Get-Control {
   Get-Control -ControllerIndex $ControllerIndex
 }
 
-function Get-ConnectedIndexController {
-  $dwUserIndex = 0
+function Test-Controller {
+  Param([Parameter(Mandatory=$true)][int] $ControllerIndex)
+  $dwUserIndex = $ControllerIndex
 
   $state = New-Object XInputWrapper+XINPUT_STATE
   $result = [XInputWrapper]::XInputGetState($dwUserIndex, [ref] $state)
 
   if ($result -eq 0) {
-    return $dwUserIndex
+    return $true
   } else {
-    throw "controller is not connected"
+    return $false
   }
 }
 
-function Main {
-  $controllerIndex = Get-ConnectedIndexController
-  Write-Host "controller index $controllerIndex is connected"
+function Get-FirstConnectedIndexController {
+  Param(
+    [int]$MaxIndex = 3,
+    [int]$Delay = 100
+  )
 
-  $previousState = New-Object XInputWrapper+XINPUT_STATE
+  $index = 0
+  #$connected = $false
+
+  while ($true) {
+    if ($(Test-Controller -ControllerIndex $index)) {
+      return $index
+    }
+    if ($index -lt $MaxIndex) {
+      $index += 1
+    } else {
+      $index = 0
+    }
+    Start-Sleep -Milliseconds $Delay
+  }
+
+
+
+  # $dwUserIndex = 0
+
+  # $state = New-Object XInputWrapper+XINPUT_STATE
+  # $result = [XInputWrapper]::XInputGetState($dwUserIndex, [ref] $state)
+
+  # if ($result -eq 0) {
+  #   return $true
+  # } else {
+  #   return $false
+  # }
+}
+
+function Main {
+  Write-Host "trying to find a connected controller..."
+  $controllerIndex = Get-FirstConnectedIndexController
+
+  Write-Host "controller was found at index $controllerIndex"
+  Write-Host ""
+  Write-Host "please wait ..."
+  Debug -ControllerIndex $controllerIndex
+
+  Write-Host "waiting a controller change"
   $control = Get-Control -ControllerIndex $controllerIndex
 
   Write-Host "control"
@@ -122,8 +169,15 @@ function Main {
 }
 
 Main
-#Debug
 
+# Init value
+# wButtons: 0
+# bLeftTrigger: 0
+# bRightTrigger: 0
+# sThumbLX: -3356
+# sThumbLY: -1869
+# sThumbRX: -3255
+# sThumbRY: -848
 
 #Joy0_Up=288
 #Joy0_Start=391
