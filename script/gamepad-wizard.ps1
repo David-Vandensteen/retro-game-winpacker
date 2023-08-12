@@ -43,12 +43,12 @@ function Debug {
   }
 }
 
-function Watch-Controler {
+function Watch-Controller {
   Param(
-    [Parameter(Mandatory=$true)][int] $ControlerIndex
+    [Parameter(Mandatory=$true)][int] $ControllerIndex
     # TODO StopAndReturnTrigger
   )
-  $dwUserIndex = $ControlerIndex
+  $dwUserIndex = $ControllerIndex
   $currentState = New-Object XInputWrapper+XINPUT_STATE
   [XInputWrapper]::XInputGetState($dwUserIndex, [ref]$currentState)
 
@@ -70,11 +70,11 @@ function Watch-Controler {
   }
 
   Start-Sleep -Milliseconds 100
-  Watch-Controler -ControlerIndex $ControlerIndex
+  Watch-Controller -ControllerIndex $ControllerIndex
 }
 
 
-function Get-ConnectedIndexControler {
+function Get-ConnectedIndexController {
   $dwUserIndex = 0
 
   $state = New-Object XInputWrapper+XINPUT_STATE
@@ -88,12 +88,12 @@ function Get-ConnectedIndexControler {
 }
 
 function Main {
-  $controlerIndex = Get-ConnectedIndexControler
+  $controllerIndex = Get-ConnectedIndexController
   Write-Host "controler index $controlerIndex is connected"
 
   $previousState = New-Object XInputWrapper+XINPUT_STATE
   #MonitorControllerEvents
-  Watch-Controler -ControlerIndex $controlerIndex
+  Watch-Controller -ControllerIndex $controllerIndex
 }
 
 Main
