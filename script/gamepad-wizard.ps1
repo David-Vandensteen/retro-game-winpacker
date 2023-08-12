@@ -49,27 +49,46 @@ function Get-Control {
     [int] $Delay = 100
   )
 
-  $buttonValues = @{}
+  $change = @{}
   $dwUserIndex = $ControllerIndex
   $currentState = New-Object XInputWrapper+XINPUT_STATE
   [XInputWrapper]::XInputGetState($dwUserIndex, [ref]$currentState)
 
   if ($currentState -ne $previousState) {
     if ($currentState.wButtons -ne $previousState.wButtons) {
-      $buttonValues["wButtons"] = $currentState.wButtons
-      return $buttonValues
+      $change["wButtons"] = $currentState.wButtons
+      return $change
     }
 
     if ($currentState.bLeftTrigger -ne $previousState.bLeftTrigger) {
-      Write-Host "Left Trigger: $($currentState.bLeftTrigger)"
+      $change["bLeftTrigger"] = $currentState.bLeftTrigger
+      return $change
     }
-    if ($currentState.bRightTrigger -ne $previousState.bRightTrigger) { Write-Host "Right Trigger: $($currentState.bRightTrigger)" }
 
-    if ($currentState.sThumbLX -ne $previousState.sThumbLX) { Write-Host "Left Thumb X: $($currentState.sThumbLX)" }
-    if ($currentState.sThumbLY -ne $previousState.sThumbLY) { Write-Host "Left Thumb Y: $($currentState.sThumbLY)" }
+    if ($currentState.bRightTrigger -ne $previousState.bRightTrigger) {
+      $change["bRightTrigger"] = $currentState.bRightTrigger
+      return $change
+    }
 
-    if ($currentState.sThumbRX -ne $previousState.sThumbRX) { Write-Host "Right Thumb X: $($currentState.sThumbRX)" }
-    if ($currentState.sThumbRY -ne $previousState.sThumbRY) { Write-Host "Right Thumb Y: $($currentState.sThumbRY)" }
+    if ($currentState.sThumbLX -ne $previousState.sThumbLX) {
+      $change["sThumbLX"] = $currentState.sThumbLX
+      return $change
+    }
+
+    if ($currentState.sThumbLY -ne $previousState.sThumbLY) {
+      $change["sThumbLY"] = $currentState.sThumbLY
+      return $change
+    }
+
+    if ($currentState.sThumbRX -ne $previousState.sThumbRX) {
+      $change["sThumbRX"] = $currentState.sThumbRX
+      return $change
+    }
+
+    if ($currentState.sThumbRY -ne $previousState.sThumbRY) {
+      $change["sThumbRY"] = $currentState.sThumbRY
+      return $change
+    }
 
     $previousState = $currentState
   }
@@ -93,13 +112,13 @@ function Get-ConnectedIndexController {
 
 function Main {
   $controllerIndex = Get-ConnectedIndexController
-  Write-Host "controller index $controlerIndex is connected"
+  Write-Host "controller index $controllerIndex is connected"
 
   $previousState = New-Object XInputWrapper+XINPUT_STATE
   $control = Get-Control -ControllerIndex $controllerIndex
 
   Write-Host "control"
-  $control.wButtons
+  $control
 }
 
 Main
