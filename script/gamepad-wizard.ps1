@@ -50,16 +50,13 @@ function Get-Control {
     [Parameter(Mandatory=$true)][int] $ControllerIndex,
     [int] $Delay = 100
   )
-
   $change = @{}
-  $dwUserIndex = $ControWllerIndex
+  $dwUserIndex = $ControllerIndex
   $currentState = New-Object XInputWrapper+XINPUT_STATE
-
 
   $previousState = $currentState
   [XInputWrapper]::XInputGetState($dwUserIndex, [ref]$currentState)
 
-  #if (($currentState.bLeftTrigger -ne -3356) -and ($currentState.))
   if ($currentState -ne $previousState) {
     if ($currentState.wButtons -ne $previousState.wButtons) {
       $change["wButtons"] = $currentState.wButtons
@@ -76,26 +73,25 @@ function Get-Control {
       return $change
     }
 
-    if ($currentState.sThumbLX -ne $previousState.sThumbLX) {
+    if (($currentState.sThumbLX -ne -3356) -and ($currentState.sThumbLX -ne $previousState.sThumbLX)) {
       $change["sThumbLX"] = $currentState.sThumbLX
       return $change
     }
 
-    if ($currentState.sThumbLY -ne $previousState.sThumbLY) {
+    if (($currentState.sThumbLY -ne -1869) -and ($currentState.sThumbLY -ne $previousState.sThumbLY)) {
       $change["sThumbLY"] = $currentState.sThumbLY
       return $change
     }
 
-    if ($currentState.sThumbRX -ne $previousState.sThumbRX) {
+    if (($currentState.sThumbRX -ne -3255) -and ($currentState.sThumbRX -ne $previousState.sThumbRX)) {
       $change["sThumbRX"] = $currentState.sThumbRX
       return $change
     }
 
-    if ($currentState.sThumbRY -ne $previousState.sThumbRY) {
+    if (($currentState.sThumbRY -ne -848) -and ($currentState.sThumbRY -ne $previousState.sThumbRY)) {
       $change["sThumbRY"] = $currentState.sThumbRY
       return $change
     }
-
     $previousState = $currentState
   }
 
@@ -122,10 +118,7 @@ function Get-FirstConnectedIndexController {
     [int]$MaxIndex = 3,
     [int]$Delay = 100
   )
-
   $index = 0
-  #$connected = $false
-
   while ($true) {
     if ($(Test-Controller -ControllerIndex $index)) {
       return $index
@@ -137,19 +130,6 @@ function Get-FirstConnectedIndexController {
     }
     Start-Sleep -Milliseconds $Delay
   }
-
-
-
-  # $dwUserIndex = 0
-
-  # $state = New-Object XInputWrapper+XINPUT_STATE
-  # $result = [XInputWrapper]::XInputGetState($dwUserIndex, [ref] $state)
-
-  # if ($result -eq 0) {
-  #   return $true
-  # } else {
-  #   return $false
-  # }
 }
 
 function Main {
@@ -158,13 +138,10 @@ function Main {
 
   Write-Host "controller was found at index $controllerIndex"
   Write-Host ""
-  Write-Host "please wait ..."
-  Debug -ControllerIndex $controllerIndex
+  #Debug -ControllerIndex $controllerIndex
 
   Write-Host "waiting a controller change"
   $control = Get-Control -ControllerIndex $controllerIndex
-
-  Write-Host "control"
   $control
 }
 
