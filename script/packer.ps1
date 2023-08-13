@@ -1,4 +1,4 @@
-
+# TODO -joypadWizard on -persistent on
 Param([string] $Args)
 
 function downloadHttp($url, $targetFile){
