@@ -9,15 +9,17 @@ RequestExecutionLevel user
 Name "${packageName}.exe"
 ShowInstDetails nevershow
 SilentInstall normal
-OutFile "..\..\dist\${packageName}.exe"
+OutFile "/*output*/"
 InstallDir "$TEMP\${packageName}"
 Icon "..\..\ico\default-gba.ico"
-BrandingText "David Vandensteen - 2022"
+BrandingText "Created with Retro Win Packer"
 AutocloseWindow True
 
 Section "install"
   SetOutPath $InstDir
   File "/*rom*/"
-  File "..\visualboyadvance\visualboyadvance.exe"
-  Exec 'visualboyadvance.exe "/*rom*/"'
+  /*configFile*/
+  /*portableFile*/
+  File "..\mgba\mGBA.exe"
+  Exec 'mGBA.exe --fullscreen "/*rom*/"'
 SectionEnd
