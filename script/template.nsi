@@ -18,6 +18,8 @@ AutocloseWindow True
 Section "install"
   SetOutPath $InstDir
   File "/*rom*/"
-  File "..\visualboyadvance\visualboyadvance.exe"
-  Exec 'visualboyadvance.exe "/*rom*/"'
+  /*configFile*/
+  /*portableFile*/
+  File "..\mgba\mGBA.exe"
+  Exec 'mGBA.exe --fullscreen "/*rom*/"'
 SectionEnd
