@@ -19,7 +19,7 @@ Section "install"
   SetOutPath $InstDir
   File "/*rom*/"
   /*configFile*/
-  #File "..\visualboyadvance\visualboyadvance.exe"
+  /*portableFile*/
   File "..\mgba\mGBA.exe"
   Exec 'mGBA.exe --fullscreen "/*rom*/"'
 SectionEnd
