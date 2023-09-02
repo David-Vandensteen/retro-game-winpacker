@@ -1,4 +1,9 @@
-Param([string] $Args)
+#Param([string] $Args)
+param(
+  [string] $Name,
+  [string] $In,
+  [string] $Out
+)
 
 function downloadHttp($url, $targetFile){
   Write-Host "downloadHttp : $url $targetFile"
@@ -93,13 +98,24 @@ function Write-Exe {
 }
 
 function Main {
+  param(
+    [Parameter(Mandatory=$true)][string] $Name,
+    [Parameter(Mandatory=$true)][string] $In,
+    [Parameter(Mandatory=$true)][string] $Out
+  )
+
   $cwd = Resolve-Path -Path "."
   $template = Join-Path $cwd "script\template.nsi"
   $makensis = Join-Path $cwd "build\nsis-3.08\makensis.exe"
 
-  $name = Get-ArgValue -ArgumentName "-Name" -Mandatory $true
-  $inputFile = Get-ArgValue -ArgumentName "-Input" -Mandatory $true
-  $outputFile = Get-ArgValue -ArgumentName "-Output" -Mandatory $true
+  # $name = Get-ArgValue -ArgumentName "-Name" -Mandatory $true
+  # $inputFile = Get-ArgValue -ArgumentName "-Input" -Mandatory $true
+  # $outputFile = Get-ArgValue -ArgumentName "-Output" -Mandatory $true
+
+  $name = $Name
+  $inputFile = $In
+  $outputFile = $Out
+
   $embedConfig = Get-ArgValue -ArgumentName "-EmbedConfig"
 
   $nsiFile = Join-Path $cwd "build\$name\$name.nsi"
@@ -126,4 +142,7 @@ function Main {
   Write-Exe -Makensis $makensis -NSIFile $nsiFile
 }
 
-Main -Args $Args
+Write-Host $Name
+Write-Host $In
+Write-Host $Out
+Main -Name $Name -In $In -Out $Out
