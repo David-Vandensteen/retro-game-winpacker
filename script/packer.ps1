@@ -40,22 +40,6 @@ function Install-Dependencies {
   }
 }
 
-function Get-ArgValue {
-  param (
-    [Parameter(Mandatory=$true)][string] $ArgumentName,
-    [bool] $Mandatory
-  )
-  $argsArray = $Args -split "\s+"
-  $index = $argsArray.IndexOf($ArgumentName)
-
-  if ($index -ge 0 -and $index -lt ($argsArray.Length - 1)) {
-    return $argsArray[$index + 1]
-  } else {
-    if ($Mandatory) { throw "$ArgumentName is undefined"}
-    return $null
-  }
-}
-
 function Embed-Config {
   Param(
     [Parameter(Mandatory=$true)][string] $EmulatorExe,
@@ -95,7 +79,6 @@ function Write-Exe {
     [Parameter(Mandatory=$true)][string] $Makensis,
     [Parameter(Mandatory=$true)][string] $NSIFile
   )
-  Write-Host "debug - enter write-exe"
   Write-Host "NSIFile : $NSIFile"
   #Start-Process -FilePath $Makensis -NoNewWindow -ArgumentList `"$NSIFile"` -Wait -ErrorAction Stop
   & $Makensis "$NSIFile"
@@ -112,15 +95,9 @@ function Main {
   $template = Join-Path $cwd "script\template.nsi"
   $makensis = Join-Path $cwd "build\nsis-3.08\makensis.exe"
 
-  # $name = Get-ArgValue -ArgumentName "-Name" -Mandatory $true
-  # $inputFile = Get-ArgValue -ArgumentName "-Input" -Mandatory $true
-  # $outputFile = Get-ArgValue -ArgumentName "-Output" -Mandatory $true
-
   $name = $Name
   $inputFile = $In
   $outputFile = $Out
-
-  $embedConfig = Get-ArgValue -ArgumentName "-EmbedConfig"
 
   $nsiFile = Join-Path $cwd "build\$name\$name.nsi"
 
@@ -134,10 +111,10 @@ function Main {
 
   Copy-Item -Force -Path $inputFile -Destination "$cwd\build\$name" -ErrorAction Stop
 
-  if ($embedConfig -eq "on") { Embed-Config -EmulatorExe "$cwd\build\mgba\mGBA.exe" -ConfigFile "$cwd\build\mgba\config.ini" -DestinationPath "$cwd\build\$name"  }
-  if ($embedConfig -eq "on") { New-Item -Path "$cwd\build\$name\portable.ini" -Force -ErrorAction Stop }
+  if ($EmbedConfig) { Embed-Config -EmulatorExe "$cwd\build\mgba\mGBA.exe" -ConfigFile "$cwd\build\mgba\config.ini" -DestinationPath "$cwd\build\$name"  }
+  if ($EmbedConfig) { New-Item -Path "$cwd\build\$name\portable.ini" -Force -ErrorAction Stop }
 
-  if ($embedConfig -eq "on") {
+  if ($EmbedConfig) {
     Write-NSI -NSIFile $nsiFile -template $template -Input $inputFile -Output $outputFile -ConfigFile "$cwd\build\mgba\config.ini"
   } else {
     Write-NSI -NSIFile $nsiFile -template $template -Input $inputFile -Output $outputFile
