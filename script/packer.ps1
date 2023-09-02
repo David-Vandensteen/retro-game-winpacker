@@ -1,8 +1,8 @@
-#Param([string] $Args)
 param(
-  [string] $Name,
-  [string] $In,
-  [string] $Out
+  [Parameter(Mandatory=$true)][string] $Name,
+  [Parameter(Mandatory=$true)][string] $In,
+  [Parameter(Mandatory=$true)][string] $Out,
+  [switch] $EmbedConfig
 )
 
 function downloadHttp($url, $targetFile){
@@ -82,6 +82,7 @@ function Write-NSI {
 
   $romFileName = Split-Path -Path $InputFile -Leaf
   Write-Host "create nsis script"
+  Write-Host $NSIFile
   $content = [System.IO.File]::ReadAllText($template).Replace("/*title*/", $Name).Replace("/*rom*/", "$romFileName").Replace("/*output*/", $OutputFile)
   if ($ico) { $content = $content.Replace("..\..\ico\default-gba.ico", $ico) }
   if ($ConfigFile) { $content = $content.Replace("/*configFile*/", 'File "config.ini"') }
@@ -94,7 +95,10 @@ function Write-Exe {
     [Parameter(Mandatory=$true)][string] $Makensis,
     [Parameter(Mandatory=$true)][string] $NSIFile
   )
-  Start-Process -FilePath $Makensis -NoNewWindow -ArgumentList "$NSIFile" -Wait -ErrorAction Stop
+  Write-Host "debug - enter write-exe"
+  Write-Host "NSIFile : $NSIFile"
+  #Start-Process -FilePath $Makensis -NoNewWindow -ArgumentList `"$NSIFile"` -Wait -ErrorAction Stop
+  & $Makensis "$NSIFile"
 }
 
 function Main {
