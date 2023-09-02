@@ -8,7 +8,7 @@ Download or clone this repository
 
 Run the following command to build your ROM:
 ```cmd
-pack -Name "Castlevania - Circle of the Moon" -Input "c:\rom\gba\castlevania-circle-of-the-moon.gba" -Output "c:\rom\win-standalone\castlevania-circle-of-the-moon.exe"
+pack -Name "Castlevania - Circle of the Moon" -In "c:\rom\gba\castlevania-circle-of-the-moon.gba" -Out "c:\rom\win-standalone\castlevania-circle-of-the-moon.exe"
 ```
 
 This script automatically download NSIS & mGBA into the **build** folder.  
