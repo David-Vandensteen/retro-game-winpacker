@@ -61,7 +61,7 @@ function Write-NSI {
     [Parameter(Mandatory=$true)][string] $InputFile,
     [Parameter(Mandatory=$true)][string] $OutputFile,
     [Parameter(Mandatory=$true)][string] $template,
-    [string] $ConfigFile
+    [string] $ConfigFile = $null
   )
 
   $romFileName = Split-Path -Path $InputFile -Leaf
@@ -92,18 +92,18 @@ function Main {
   )
 
   $cwd = Resolve-Path -Path "."
-  $template = Join-Path $cwd "script\template.nsi"
-  $makensis = Join-Path $cwd "build\nsis-3.08\makensis.exe"
+  $template = Join-Path -Path $cwd -ChildPath "script\template.nsi"
+  $makensis = Join-Path -Path $cwd -ChildPath "build\nsis-3.08\makensis.exe"
 
   $name = $Name
   $inputFile = $In
   $outputFile = $Out
 
-  $nsiFile = Join-Path $cwd "build\$name\$name.nsi"
+  $nsiFile = Join-Path -Path $cwd -ChildPath "build\$name\$name.nsi"
 
   Install-Dependencies -Path $(Join-Path $cwd "build")
 
-  if (-Not(Test-Path -Path $(Join-Path $cwd "build\$name"))) { New-Item -Path $(Join-Path $cwd "build\$name") -ItemType Directory -Force }
+  if (-Not(Test-Path -Path $(Join-Path -Path $cwd -ChildPath "build\$name"))) { New-Item -Path $(Join-Path -Path $cwd -ChildPath "build\$name") -ItemType Directory -Force }
   if (-Not(Test-Path -Path $inputFile)) {
     Write-Error "$inputFile not found"
     Exit 2

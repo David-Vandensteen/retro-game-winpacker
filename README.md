@@ -1,10 +1,31 @@
-# retro-game-winpacker
-Pack a Game Boy Advance rom into a single Windows executable  
+# retro-game-winpacker  
+![](https://i.ibb.co/jVHbc1G/retro-game-winpacker.png)
 
-## SetUp
-Download or clone this repository  
+This script simplifies the creation of standalone executable files for retro game emulation.  
+It is designed for the context of retro gaming, where an emulator is embedded within a standalone Windows executable for a seamless gaming experience.
 
-## Build your rom  
+
+## SetUp  
+
+Download or clone this repository.  
+
+### Parameters
+
+- **Name**: The name of the game.
+- **In**: The input file or path to the game ROM.
+- **Out**: The output file or path for the standalone executable.
+- **EmbedConfig**: A switch to embed configuration settings (optional).
+
+The EmbedConfig switch is an optional feature in the script.  
+When activated, it includes emulator configuration settings in the standalone executable.  
+
+Without it, the executable contains only the game ROM and emulator, requiring users to configure the emulator manually for things like resolution and controls.  
+
+With EmbedConfig enabled, the script initiates the emulator program.  
+It allows the emulator to open, presenting the user with its configuration options and settings.  
+The script remains in a "waiting" state, not proceeding further until the user completes their configuration and closes the emulator.  
+
+### Build game example    
 
 Run the following command to build your ROM:
 ```cmd
