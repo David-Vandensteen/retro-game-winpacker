@@ -1,3 +1,4 @@
+![](https://i.ibb.co/jVHbc1G/retro-game-winpacker.png)
 # retro-game-winpacker  
 
 This script simplifies the creation of standalone executable files for retro game emulation.  
