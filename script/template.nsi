@@ -1,6 +1,8 @@
 Unicode True
 SetCompress force
-SetCompressor lzma
+SetCompressor /SOLID lzma
+SetDatablockOptimize ON
+SetCompressorDictSize 64
 
 !Define packageName "/*title*/"
 
