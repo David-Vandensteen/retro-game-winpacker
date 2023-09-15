@@ -50,6 +50,18 @@ function Install-mGBA {
   }
 }
 
+function Install-Nestopia {
+  Param([Parameter(Mandatory=$true)][string] $WorkingPath)
+  $urlNestopia = "https://sourceforge.net/projects/nestopia/files/Nestopia/v1.40/Nestopia140bin.zip"
+
+  Write-Folders -Path $WorkingPath
+  if (-Not(Test-Path -Path "$WorkingPath\nestopia")) {
+    downloadHttp $urlNestopia "$WorkingPath\download"
+    New-Item -Path "$WorkingPath\nestopia" -ItemType Directory -Force
+    Expand-Archive "$WorkingPath\download\Nestopia140bin.zip" "$WorkingPath\nestopia"
+  }
+}
+
 function Embed-Config {
   Param(
     [Parameter(Mandatory=$true)][string] $EmulatorExe,
@@ -71,17 +83,35 @@ function Write-NSI {
     [Parameter(Mandatory=$true)][string] $InputFile,
     [Parameter(Mandatory=$true)][string] $OutputFile,
     [Parameter(Mandatory=$true)][string] $template,
+    [Parameter(Mandatory=$true)][string] $Arch,
     [string] $ConfigFile = $null
   )
 
   $romFileName = Split-Path -Path $InputFile -Leaf
   Write-Host "create nsis script"
+  Write-Host $template
   Write-Host $NSIFile
-  $content = [System.IO.File]::ReadAllText($template).Replace("/*title*/", $Name).Replace("/*rom*/", "$romFileName").Replace("/*output*/", $OutputFile)
-  if ($ico) { $content = $content.Replace("..\..\ico\default-gba.ico", $ico) }
-  if ($ConfigFile) { $content = $content.Replace("/*configFile*/", 'File "config.ini"') }
-  if ($ConfigFile) { $content = $content.Replace("/*portableFile*/", 'File "portable.ini"') }
-  [System.IO.File]::WriteAllText($NSIFile, $content)
+  $NSIcontent = [System.IO.File]::ReadAllText($template).Replace("/*title*/", $Name).Replace("/*output*/", $OutputFile)
+  $NSIcontent = $NSIcontent.Replace("/*version*/", $version)
+  if ($ConfigFile -and ($Arch -eq "gba")) { $NSIcontent = $NSIcontent.Replace("/*configFile*/", 'File "config.ini"') }
+  if ($ConfigFile -and ($Arch -eq "gba")) { $NSIcontent = $NSIcontent.Replace("/*mgba-portableFile*/", 'File "portable.ini"') }
+
+  if ($Arch -eq "gba") {
+    $NSIcontent = $NSIcontent.Replace("/*exec*/", 'mGBA.exe --fullscreen "/*rom*/"')
+  }
+
+  if ($Arch -eq "nes") {
+    if ($ConfigFile) {
+      $nestopiaContent = [System.IO.File]::ReadAllText("$PWD\build\nestopia\nestopia.xml")
+      $nestopiaContent = $nestopiaContent.Replace("$PWD\build\nestopia", "$env:TEMP\$Name")
+      $nestopiaContent = $nestopiaContent.Replace("            <start-fullscreen>no</start-fullscreen>", "            <start-fullscreen>yes</start-fullscreen>")
+      [System.IO.File]::WriteAllText("$PWD\build\$Name\nestopia.xml", $nestopiaContent)
+      $NSIcontent = $NSIcontent.Replace("/*configFile*/", 'File "nestopia.xml"')
+    }
+    $NSIcontent = $NSIcontent.Replace("/*exec*/", 'nestopia.exe "/*rom*/"')
+  }
+  $NSIcontent = $NSIcontent.Replace("/*rom*/", "$romFileName")
+  [System.IO.File]::WriteAllText($NSIFile, $NSIcontent)
 }
 
 function Write-Exe {
@@ -90,7 +120,6 @@ function Write-Exe {
     [Parameter(Mandatory=$true)][string] $NSIFile
   )
   Write-Host "NSIFile : $NSIFile"
-  #Start-Process -FilePath $Makensis -NoNewWindow -ArgumentList `"$NSIFile"` -Wait -ErrorAction Stop
   & $Makensis "$NSIFile"
 }
 
@@ -103,7 +132,8 @@ function Main {
   )
 
   $cwd = Resolve-Path -Path "."
-  $template = Join-Path -Path $cwd -ChildPath "script\template.nsi"
+  if ($Arch -eq "gba") { $template = Join-Path -Path $cwd -ChildPath "script\template-mgba.nsi" }
+  if ($Arch -eq "nes") { $template = Join-Path -Path $cwd -ChildPath "script\template-nestopia.nsi" }
   $makensis = Join-Path -Path $cwd -ChildPath "build\nsis-3.08\makensis.exe"
 
   $name = $Name
@@ -112,9 +142,10 @@ function Main {
 
   $nsiFile = Join-Path -Path $cwd -ChildPath "build\$name\$name.nsi"
 
-  # Install-Dependencies -Path $(Join-Path $cwd "build")
   Install-NSIS -WorkingPath $(Join-Path $cwd "build")
+
   if ($Arch -eq "gba") { Install-mGBA -WorkingPath $(Join-Path $cwd "build") }
+  if ($Arch -eq "nes") { Install-Nestopia -WorkingPath $(Join-Path $cwd "build") }
 
   if (-Not(Test-Path -Path $(Join-Path -Path $cwd -ChildPath "build\$name"))) { New-Item -Path $(Join-Path -Path $cwd -ChildPath "build\$name") -ItemType Directory -Force }
   if (-Not(Test-Path -Path $inputFile)) {
@@ -124,18 +155,29 @@ function Main {
 
   Copy-Item -Force -Path $inputFile -Destination "$cwd\build\$name" -ErrorAction Stop
 
-  if ($EmbedConfig) { Embed-Config -EmulatorExe "$cwd\build\mgba\mGBA.exe" -ConfigFile "$cwd\build\mgba\config.ini" -DestinationPath "$cwd\build\$name"  }
-  if ($EmbedConfig) { New-Item -Path "$cwd\build\$name\portable.ini" -Force -ErrorAction Stop }
+  if ($EmbedConfig) {
+    if ($Arch -eq "gba") {
+      Embed-Config -EmulatorExe "$cwd\build\mgba\mGBA.exe" -ConfigFile "$cwd\build\mgba\config.ini" -DestinationPath "$cwd\build\$name"
+      New-Item -Path "$cwd\build\$name\portable.ini" -Force -ErrorAction Stop
+    }
+    if ($Arch -eq "nes") {
+      Embed-Config -EmulatorExe "$cwd\build\nestopia\nestopia.exe" -ConfigFile "$cwd\build\nestopia\nestopia.xml" -DestinationPath "$cwd\build\$name"
+    }
+  }
 
   if ($EmbedConfig) {
-    Write-NSI -NSIFile $nsiFile -template $template -Input $inputFile -Output $outputFile -ConfigFile "$cwd\build\mgba\config.ini"
+    Write-NSI -Arch $Arch -NSIFile $nsiFile -template $template -Input $inputFile -Output $outputFile -ConfigFile "$cwd\build\mgba\config.ini"
   } else {
-    Write-NSI -NSIFile $nsiFile -template $template -Input $inputFile -Output $outputFile
+    Write-NSI -Arch $Arch -NSIFile $nsiFile -template $template -Input $inputFile -Output $outputFile
   }
 
   Write-Exe -Makensis $makensis -NSIFile $nsiFile
 }
 
+$version = "1.0.0-develop"
+
+Write-Host $version
+Write-Host $PWD
 Write-Host $Name
 Write-Host $In
 Write-Host $Out
