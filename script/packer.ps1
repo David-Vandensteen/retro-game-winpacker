@@ -2,6 +2,7 @@ param(
   [Parameter(Mandatory=$true)][string] $Name,
   [Parameter(Mandatory=$true)][string] $In,
   [Parameter(Mandatory=$true)][string] $Out,
+  [Parameter(Mandatory=$true)][string] $Arch,
   [switch] $EmbedConfig
 )
 
@@ -14,12 +15,8 @@ function downloadHttp($url, $targetFile){
   Write-Output "Time taken: $((Get-Date).Subtract($start_time).Seconds) second(s)"
 }
 
-function Install-Dependencies {
+function Write-Folders {
   Param([Parameter(Mandatory=$true)][string] $Path)
-
-  $urlNSIS = "http://azertyvortex.free.fr/download/retro-game-winpacker/nsis-3.08.zip"
-  $urlMGBA = "http://azertyvortex.free.fr/download/mGBA-0.10.2-win64.zip"
-
   if (-Not(Test-Path -Path $path)) {
     New-Item -Path $path -ItemType Directory -Force
   }
@@ -27,16 +24,29 @@ function Install-Dependencies {
   if (-Not(Test-Path -Path "$path\download")) {
     New-Item -Path "$path\download" -ItemType Directory -Force
   }
+}
 
-  if (-Not(Test-Path -Path "$path\mgba")) {
-    downloadHttp $urlMGBA "$path\download"
-    New-Item -Path "$path\mgba" -ItemType Directory -Force
-    Expand-Archive "$path\download\mGBA-0.10.2-win64.zip" "$path\mgba"
+function Install-NSIS {
+  Param([Parameter(Mandatory=$true)][string] $WorkingPath)
+  $urlNSIS = "http://azertyvortex.free.fr/download/retro-game-winpacker/nsis-3.08.zip"
+
+  Write-Folders -Path $WorkingPath
+
+  if (-Not(Test-Path -Path "$WorkingPath\nsis-3.08")) {
+    downloadHttp $urlNSIS "$WorkingPath\download\"
+    Expand-Archive "$WorkingPath\download\nsis-3.08.zip" $WorkingPath
   }
+}
 
-  if (-Not(Test-Path -Path "$path\nsis-3.08")) {
-    downloadHttp $urlNSIS "$path\download\"
-    Expand-Archive "$path\download\nsis-3.08.zip" $path
+function Install-mGBA {
+  Param([Parameter(Mandatory=$true)][string] $WorkingPath)
+  $urlMGBA = "http://azertyvortex.free.fr/download/mGBA-0.10.2-win64.zip"
+
+  Write-Folders -Path $WorkingPath
+  if (-Not(Test-Path -Path "$WorkingPath\mgba")) {
+    downloadHttp $urlMGBA "$WorkingPath\download"
+    New-Item -Path "$WorkingPath\mgba" -ItemType Directory -Force
+    Expand-Archive "$WorkingPath\download\mGBA-0.10.2-win64.zip" "$WorkingPath\mgba"
   }
 }
 
@@ -88,7 +98,8 @@ function Main {
   param(
     [Parameter(Mandatory=$true)][string] $Name,
     [Parameter(Mandatory=$true)][string] $In,
-    [Parameter(Mandatory=$true)][string] $Out
+    [Parameter(Mandatory=$true)][string] $Out,
+    [Parameter(Mandatory=$true)][string] $Arch
   )
 
   $cwd = Resolve-Path -Path "."
@@ -101,7 +112,9 @@ function Main {
 
   $nsiFile = Join-Path -Path $cwd -ChildPath "build\$name\$name.nsi"
 
-  Install-Dependencies -Path $(Join-Path $cwd "build")
+  # Install-Dependencies -Path $(Join-Path $cwd "build")
+  Install-NSIS -WorkingPath $(Join-Path $cwd "build")
+  if ($Arch -eq "gba") { Install-mGBA -WorkingPath $(Join-Path $cwd "build") }
 
   if (-Not(Test-Path -Path $(Join-Path -Path $cwd -ChildPath "build\$name"))) { New-Item -Path $(Join-Path -Path $cwd -ChildPath "build\$name") -ItemType Directory -Force }
   if (-Not(Test-Path -Path $inputFile)) {
@@ -126,4 +139,5 @@ function Main {
 Write-Host $Name
 Write-Host $In
 Write-Host $Out
-Main -Name $Name -In $In -Out $Out
+Write-Host $Arch
+Main -Name $Name -In $In -Out $Out -Arch $Arch
