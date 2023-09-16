@@ -3,7 +3,7 @@ param(
   [Parameter(Mandatory=$true)][string] $In,
   [Parameter(Mandatory=$true)][string] $Out,
   [Parameter(Mandatory=$true)][string] $Arch,
-  [switch] $EmbedConfig
+  [switch] $Configure
 )
 
 function downloadHttp($url, $targetFile){
@@ -47,6 +47,11 @@ function Install-mGBA {
     downloadHttp $urlMGBA "$WorkingPath\download"
     New-Item -Path "$WorkingPath\mgba" -ItemType Directory -Force
     Expand-Archive "$WorkingPath\download\mGBA-0.10.2-win64.zip" "$WorkingPath\mgba"
+    # start the emulator to generate conf
+    Start-Process -NoNewWindow -FilePath "$WorkingPath\mgba\mGBA.exe" -ErrorAction Stop
+    sleep 2
+    # TODO check and loop
+    Stop-Process -Name "mGBA" -Force
   }
 }
 
@@ -59,6 +64,24 @@ function Install-Nestopia {
     downloadHttp $urlNestopia "$WorkingPath\download"
     New-Item -Path "$WorkingPath\nestopia" -ItemType Directory -Force
     Expand-Archive "$WorkingPath\download\Nestopia140bin.zip" "$WorkingPath\nestopia"
+    downloadHttp "http://azertyvortex.free.fr/download/nestopia.xml" "$WorkingPath\nestopia"
+  }
+}
+
+function Install-Snes9x {
+  Param([Parameter(Mandatory=$true)][string] $WorkingPath)
+  $urlSnes9x = "https://dl.emulator-zone.com/download.php/emulators/snes/snes9x/snes9x-1.62.3-win32-x64.zip"
+
+  Write-Folders -Path $WorkingPath
+  if (-Not(Test-Path -Path "$WorkingPath\snes9x")) {
+    downloadHttp $urlSnes9x "$WorkingPath\download"
+    New-Item -Path "$WorkingPath\snes9x" -ItemType Directory -Force
+    Expand-Archive "$WorkingPath\download\snes9x-1.62.3-win32-x64.zip" "$WorkingPath\snes9x"
+    # start the emulator to generate conf
+    Start-Process -NoNewWindow -FilePath "$WorkingPath\snes9x\snes9x-x64.exe" -ErrorAction Stop
+    sleep 2
+    # TODO check and loop
+    Stop-Process -Name "snes9x-x64" -Force
   }
 }
 
@@ -83,8 +106,7 @@ function Write-NSI {
     [Parameter(Mandatory=$true)][string] $InputFile,
     [Parameter(Mandatory=$true)][string] $OutputFile,
     [Parameter(Mandatory=$true)][string] $template,
-    [Parameter(Mandatory=$true)][string] $Arch,
-    [string] $ConfigFile = $null
+    [Parameter(Mandatory=$true)][string] $Arch
   )
 
   $romFileName = Split-Path -Path $InputFile -Leaf
@@ -93,23 +115,29 @@ function Write-NSI {
   Write-Host $NSIFile
   $NSIcontent = [System.IO.File]::ReadAllText($template).Replace("/*title*/", $Name).Replace("/*output*/", $OutputFile)
   $NSIcontent = $NSIcontent.Replace("/*version*/", $version)
-  if ($ConfigFile -and ($Arch -eq "gba")) { $NSIcontent = $NSIcontent.Replace("/*configFile*/", 'File "config.ini"') }
-  if ($ConfigFile -and ($Arch -eq "gba")) { $NSIcontent = $NSIcontent.Replace("/*mgba-portableFile*/", 'File "portable.ini"') }
 
   if ($Arch -eq "gba") {
     $NSIcontent = $NSIcontent.Replace("/*exec*/", 'mGBA.exe --fullscreen "/*rom*/"')
+    Copy-Item -Force -Path "$PWD\build\mgba\config.ini" -Destination "$PWD\build\$Name" -ErrorAction Stop
   }
 
   if ($Arch -eq "nes") {
-    if ($ConfigFile) {
-      $nestopiaContent = [System.IO.File]::ReadAllText("$PWD\build\nestopia\nestopia.xml")
-      $nestopiaContent = $nestopiaContent.Replace("$PWD\build\nestopia", "$env:TEMP\$Name")
-      $nestopiaContent = $nestopiaContent.Replace("            <start-fullscreen>no</start-fullscreen>", "            <start-fullscreen>yes</start-fullscreen>")
-      [System.IO.File]::WriteAllText("$PWD\build\$Name\nestopia.xml", $nestopiaContent)
-      $NSIcontent = $NSIcontent.Replace("/*configFile*/", 'File "nestopia.xml"')
-    }
+    $nestopiaContent = [System.IO.File]::ReadAllText("$PWD\build\nestopia\nestopia.xml")
+    $nestopiaContent = $nestopiaContent.Replace("c:\temp\retro-game-winpacker\build\nestopia", "$env:TEMP\$Name")
+    $nestopiaContent = $nestopiaContent.Replace("            <start-fullscreen>no</start-fullscreen>", "            <start-fullscreen>yes</start-fullscreen>")
+    [System.IO.File]::WriteAllText("$PWD\build\$Name\nestopia.xml", $nestopiaContent)
+
     $NSIcontent = $NSIcontent.Replace("/*exec*/", 'nestopia.exe "/*rom*/"')
   }
+
+  if ($Arch -eq "snes") {
+    $snesContent = [System.IO.File]::ReadAllText("$PWD\build\snes9x\snes9x.conf")
+    $snesContent = $snesContent.Replace("     Fullscreen:Enabled              = FALSE", "     Fullscreen:Enabled              = TRUE")
+    [System.IO.File]::WriteAllText("$PWD\build\$Name\snes9x.conf", $snesContent)
+
+    $NSIcontent = $NSIcontent.Replace("/*exec*/", 'snes9x-x64.exe "/*rom*/"')
+  }
+
   $NSIcontent = $NSIcontent.Replace("/*rom*/", "$romFileName")
   [System.IO.File]::WriteAllText($NSIFile, $NSIcontent)
 }
@@ -132,8 +160,11 @@ function Main {
   )
 
   $cwd = Resolve-Path -Path "."
+
   if ($Arch -eq "gba") { $template = Join-Path -Path $cwd -ChildPath "script\template-mgba.nsi" }
   if ($Arch -eq "nes") { $template = Join-Path -Path $cwd -ChildPath "script\template-nestopia.nsi" }
+  if ($Arch -eq "snes") { $template = Join-Path -Path $cwd -ChildPath "script\template-snes9x.nsi" }
+
   $makensis = Join-Path -Path $cwd -ChildPath "build\nsis-3.08\makensis.exe"
 
   $name = $Name
@@ -146,6 +177,7 @@ function Main {
 
   if ($Arch -eq "gba") { Install-mGBA -WorkingPath $(Join-Path $cwd "build") }
   if ($Arch -eq "nes") { Install-Nestopia -WorkingPath $(Join-Path $cwd "build") }
+  if ($Arch -eq "snes") { Install-Snes9x -WorkingPath $(Join-Path $cwd "build") }
 
   if (-Not(Test-Path -Path $(Join-Path -Path $cwd -ChildPath "build\$name"))) { New-Item -Path $(Join-Path -Path $cwd -ChildPath "build\$name") -ItemType Directory -Force }
   if (-Not(Test-Path -Path $inputFile)) {
@@ -155,7 +187,7 @@ function Main {
 
   Copy-Item -Force -Path $inputFile -Destination "$cwd\build\$name" -ErrorAction Stop
 
-  if ($EmbedConfig) {
+  if ($Configure) {
     if ($Arch -eq "gba") {
       Embed-Config -EmulatorExe "$cwd\build\mgba\mGBA.exe" -ConfigFile "$cwd\build\mgba\config.ini" -DestinationPath "$cwd\build\$name"
       New-Item -Path "$cwd\build\$name\portable.ini" -Force -ErrorAction Stop
@@ -165,12 +197,7 @@ function Main {
     }
   }
 
-  if ($EmbedConfig) {
-    Write-NSI -Arch $Arch -NSIFile $nsiFile -template $template -Input $inputFile -Output $outputFile -ConfigFile "$cwd\build\mgba\config.ini"
-  } else {
-    Write-NSI -Arch $Arch -NSIFile $nsiFile -template $template -Input $inputFile -Output $outputFile
-  }
-
+  Write-NSI -Arch $Arch -NSIFile $nsiFile -template $template -Input $inputFile -Output $outputFile
   Write-Exe -Makensis $makensis -NSIFile $nsiFile
 }
 
@@ -182,4 +209,5 @@ Write-Host $Name
 Write-Host $In
 Write-Host $Out
 Write-Host $Arch
+
 Main -Name $Name -In $In -Out $Out -Arch $Arch

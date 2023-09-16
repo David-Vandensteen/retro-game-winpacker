@@ -21,7 +21,7 @@ Section "install"
   SetOutPath $InstDir
   File "/*rom*/"
 
-  /*configFile*/
+  File "nestopia.xml"
 
   SetOutPath "$INSTDIR\language"
   File "..\nestopia\language\english.nlg"
