@@ -1,6 +1,8 @@
 Unicode True
 SetCompress force
-SetCompressor lzma
+SetCompressor /SOLID lzma
+SetDatablockOptimize ON
+SetCompressorDictSize 64
 
 !Define packageName "/*title*/"
 
@@ -12,14 +14,14 @@ SilentInstall normal
 OutFile "/*output*/"
 InstallDir "$TEMP\${packageName}"
 Icon "..\..\ico\default-gba.ico"
-BrandingText "Created with Retro Win Packer"
+BrandingText "Created with Retro Win Packer /*version*/"
 AutocloseWindow True
 
 Section "install"
   SetOutPath $InstDir
   File "/*rom*/"
-  /*configFile*/
-  /*portableFile*/
   File "..\mgba\mGBA.exe"
-  Exec 'mGBA.exe --fullscreen "/*rom*/"'
+  File "config.ini"
+  File "..\mgba\portable.ini"
+  Exec '/*exec*/'
 SectionEnd
