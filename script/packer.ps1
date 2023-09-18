@@ -65,6 +65,10 @@ function Install-Nestopia {
     New-Item -Path "$WorkingPath\nestopia" -ItemType Directory -Force
     Expand-Archive "$WorkingPath\download\Nestopia140bin.zip" "$WorkingPath\nestopia"
     downloadHttp "http://azertyvortex.free.fr/download/nestopia.xml" "$WorkingPath\nestopia"
+    $nestopiaConfigFile = "$WorkingPath\nestopia\nestopia.xml"
+    $nestopiaContent = [System.IO.File]::ReadAllText($nestopiaConfigFile)
+    $nestopiaContent = $nestopiaContent.Replace("            <start-fullscreen>no</start-fullscreen>", "            <start-fullscreen>yes</start-fullscreen>")
+    [System.IO.File]::WriteAllText($nestopiaConfigFile, $nestopiaContent)
   }
 }
 
@@ -82,6 +86,11 @@ function Install-Snes9x {
     sleep 2
     # TODO check and loop
     Stop-Process -Name "snes9x-x64" -Force
+    sleep 5
+    $snesConfigFile = "$WorkingPath\snes9x\snes9x.conf"
+    $snesContent = [System.IO.File]::ReadAllText($snesConfigFile)
+    $snesContent = $snesContent.Replace("     Fullscreen:Enabled              = FALSE", "     Fullscreen:Enabled              = TRUE")
+    [System.IO.File]::WriteAllText($snesConfigFile, $snesContent)
   }
 }
 
@@ -123,18 +132,17 @@ function Write-NSI {
 
   if ($Arch -eq "nes") {
     $nestopiaContent = [System.IO.File]::ReadAllText("$PWD\build\nestopia\nestopia.xml")
-    $nestopiaContent = $nestopiaContent.Replace("c:\temp\retro-game-winpacker\build\nestopia", "$env:TEMP\$Name")
-    $nestopiaContent = $nestopiaContent.Replace("            <start-fullscreen>no</start-fullscreen>", "            <start-fullscreen>yes</start-fullscreen>")
+    $nestopiaContent = $nestopiaContent.Replace("C:\temp\retro-game-winpacker\build\nestopia", "$env:TEMP\$Name")
     [System.IO.File]::WriteAllText("$PWD\build\$Name\nestopia.xml", $nestopiaContent)
 
     $NSIcontent = $NSIcontent.Replace("/*exec*/", 'nestopia.exe "/*rom*/"')
   }
 
   if ($Arch -eq "snes") {
-    $snesContent = [System.IO.File]::ReadAllText("$PWD\build\snes9x\snes9x.conf")
-    $snesContent = $snesContent.Replace("     Fullscreen:Enabled              = FALSE", "     Fullscreen:Enabled              = TRUE")
-    [System.IO.File]::WriteAllText("$PWD\build\$Name\snes9x.conf", $snesContent)
-
+    # $snesContent = [System.IO.File]::ReadAllText("$PWD\build\snes9x\snes9x.conf")
+    # $snesContent = $snesContent.Replace("     Fullscreen:Enabled              = FALSE", "     Fullscreen:Enabled              = TRUE")
+    # [System.IO.File]::WriteAllText("$PWD\build\$Name\snes9x.conf", $snesContent)
+    Copy-Item -Force -Path "$PWD\build\snes9x\snes9x.conf" -Destination "$PWD\build\$Name" -ErrorAction Stop
     $NSIcontent = $NSIcontent.Replace("/*exec*/", 'snes9x-x64.exe "/*rom*/"')
   }
 
@@ -190,7 +198,7 @@ function Main {
   if ($Configure) {
     if ($Arch -eq "gba") {
       Embed-Config -EmulatorExe "$cwd\build\mgba\mGBA.exe" -ConfigFile "$cwd\build\mgba\config.ini" -DestinationPath "$cwd\build\$name"
-      New-Item -Path "$cwd\build\$name\portable.ini" -Force -ErrorAction Stop
+      #New-Item -Path "$cwd\build\$name\portable.ini" -Force -ErrorAction Stop
     }
     if ($Arch -eq "nes") {
       Embed-Config -EmulatorExe "$cwd\build\nestopia\nestopia.exe" -ConfigFile "$cwd\build\nestopia\nestopia.xml" -DestinationPath "$cwd\build\$name"
