@@ -43,6 +43,7 @@ function Install-mGBA {
   $urlMGBA = "http://azertyvortex.free.fr/download/mGBA-0.10.2-win64.zip"
 
   Write-Folders -Path $WorkingPath
+
   if (-Not(Test-Path -Path "$WorkingPath\mgba")) {
     downloadHttp $urlMGBA "$WorkingPath\download"
     New-Item -Path "$WorkingPath\mgba" -ItemType Directory -Force
@@ -93,6 +94,19 @@ function Install-Snes9x {
     [System.IO.File]::WriteAllText($snesConfigFile, $snesContent)
   }
 }
+
+function Install-WinUAE {
+  Param([Parameter(Mandatory=$true)][string] $WorkingPath)
+  $urlWinUAE = "https://download.abime.net/winuae/releases/WinUAE5000_x64.zip"
+
+  Write-Folders -Path $WorkingPath
+  if (-Not(Test-Path -Path "$WorkingPath\winuae-5.0.0")) {
+    downloadHttp $urlWinUAE "$WorkingPath\download\"
+    New-Item -Path "$WorkingPath\winuae-5.0.0" -ItemType Directory -Force
+    Expand-Archive "$WorkingPath\download\WinUAE5000_x64.zip" "$WorkingPath\winuae-5.0.0"
+  }
+}
+
 
 function Embed-Config {
   Param(
@@ -186,6 +200,8 @@ function Main {
   if ($Arch -eq "gba") { Install-mGBA -WorkingPath $(Join-Path $cwd "build") }
   if ($Arch -eq "nes") { Install-Nestopia -WorkingPath $(Join-Path $cwd "build") }
   if ($Arch -eq "snes") { Install-Snes9x -WorkingPath $(Join-Path $cwd "build") }
+
+  if ($Arch -eq "amiga") { Install-WinUAE -WorkingPath $(Join-Path $cwd "build"); pause }
 
   if (-Not(Test-Path -Path $(Join-Path -Path $cwd -ChildPath "build\$name"))) { New-Item -Path $(Join-Path -Path $cwd -ChildPath "build\$name") -ItemType Directory -Force }
   if (-Not(Test-Path -Path $inputFile)) {
