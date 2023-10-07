@@ -13,17 +13,15 @@ ShowInstDetails nevershow
 SilentInstall normal
 OutFile "/*output*/"
 InstallDir "$TEMP\${packageName}"
-Icon "..\..\ico\default-snes.ico"
-BrandingText "Created with Retro Win Packer /*version*/"
+Icon "..\..\ico\default-amiga.ico"
+BrandingText "Created with Retro Game Win Packer /*version*/"
 AutocloseWindow True
 
 Section "install"
-  SetOutPath $InstDir\Roms
-  File "/*rom*/"
-
   SetOutPath $InstDir
-  File "snes9x.conf"
-  File "..\snes9x\snes9x-x64.exe"
-
+  File "/*rom*/"
+  File "..\winuae-5.0.0\Amiga kick13.rom"
+  File "..\winuae-5.0.0\winuae64.exe"
+  File "game.uae"
   Exec '/*exec*/'
 SectionEnd

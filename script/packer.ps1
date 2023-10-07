@@ -1,8 +1,7 @@
 param(
-  [Parameter(Mandatory=$true)][string] $Name,
   [Parameter(Mandatory=$true)][string] $In,
   [Parameter(Mandatory=$true)][string] $Out,
-  [Parameter(Mandatory=$true)][string] $Arch,
+  [string] $ForceArch,
   [switch] $Configure
 )
 
@@ -43,6 +42,7 @@ function Install-mGBA {
   $urlMGBA = "http://azertyvortex.free.fr/download/mGBA-0.10.2-win64.zip"
 
   Write-Folders -Path $WorkingPath
+
   if (-Not(Test-Path -Path "$WorkingPath\mgba")) {
     downloadHttp $urlMGBA "$WorkingPath\download"
     New-Item -Path "$WorkingPath\mgba" -ItemType Directory -Force
@@ -94,6 +94,57 @@ function Install-Snes9x {
   }
 }
 
+function Install-WinUAE {
+  Param([Parameter(Mandatory=$true)][string] $WorkingPath)
+  $urlWinUAE = "https://download.abime.net/winuae/releases/WinUAE5000_x64.zip"
+  $urlKick = "http://azertyvortex.free.fr/download/amiga-kick.zip"
+  $urlConf = "http://azertyvortex.free.fr/download/retro-game-winpacker/game.uae"
+
+  Write-Folders -Path $WorkingPath
+  if (-Not(Test-Path -Path "$WorkingPath\winuae-5.0.0")) {
+    downloadHttp $urlWinUAE "$WorkingPath\download"
+    downloadHttp $urlKick "$WorkingPath\download"
+    downloadHttp $urlConf "$WorkingPath\download"
+    New-Item -Path "$WorkingPath\winuae-5.0.0" -ItemType Directory -Force
+    Expand-Archive "$WorkingPath\download\WinUAE5000_x64.zip" "$WorkingPath\winuae-5.0.0" -Force
+    Expand-Archive "$WorkingPath\download\amiga-kick.zip" "$WorkingPath\download" -Force
+    Copy-Item -Path "$WorkingPath\download\Amiga kick13.rom" -Destination "$WorkingPath\winuae-5.0.0" -Force
+    Copy-Item -Path "$WorkingPath\download\game.uae" -Destination "$WorkingPath\winuae-5.0.0" -Force
+
+    $UAEConfigFile = "$WorkingPath\winuae-5.0.0\game.uae"
+    $UAEContent = [System.IO.File]::ReadAllText($UAEConfigFile)
+    $UAEContent = $UAEContent.Replace("gfx_fullscreen_amiga=false", "gfx_fullscreen_amiga=true")
+    $UAEContent = $UAEContent.Replace("gfx_width_fullscreen=800", "gfx_width_fullscreen=1024")
+    $UAEContent = $UAEContent.Replace("gfx_height_fullscreen=600", "gfx_height_fullscreen=768")
+    [System.IO.File]::WriteAllText($UAEConfigFile, $UAEContent)
+  }
+}
+
+function Get-Name {
+  Param(
+    [Parameter(Mandatory=$true)][string] $File
+  )
+  $name = (Split-Path -Path $File -Leaf).Split(".")[0]
+  return $name
+}
+
+function Get-Arch {
+  Param(
+    [Parameter(Mandatory=$true)][string] $File,
+    [string] $ForceArch
+  )
+
+  if ($ForceArch) { return $ForceArch }
+
+  $ext = (Split-Path -Path $In -Leaf).Split(".")[1]
+  switch ($ext) {
+    "adf" { return "amiga"; break }
+    "gba" { return "gba"; break }
+    "sfc" { return "snes"; break }
+    "nes" { return "nes"; break }
+  }
+}
+
 function Embed-Config {
   Param(
     [Parameter(Mandatory=$true)][string] $EmulatorExe,
@@ -105,7 +156,12 @@ function Embed-Config {
   Write-Host "Your configured settings will be embedded in the standalone file." -ForegroundColor blue
   Write-Host "----------------------------------------------------------------------" -ForegroundColor blue
   Write-Host "emulator : $EmulatorExe"
-  Start-Process -NoNewWindow -FilePath $EmulatorExe -Wait -ErrorAction Stop
+  if ($Arch -eq "amiga") {
+    # Start-Process -NoNewWindow -FilePath $EmulatorExe -ArgumentList "$ConfigFile" -Wait -ErrorAction Stop
+    Start-Process -NoNewWindow -FilePath notepad -ArgumentList "$ConfigFile" -Wait -ErrorAction Stop
+  } else {
+    Start-Process -NoNewWindow -FilePath $EmulatorExe -Wait -ErrorAction Stop
+  }
   Copy-Item -Force -Path $ConfigFile -Destination $DestinationPath -ErrorAction Stop
 }
 
@@ -146,6 +202,17 @@ function Write-NSI {
     $NSIcontent = $NSIcontent.Replace("/*exec*/", 'snes9x-x64.exe "/*rom*/"')
   }
 
+  if ($Arch -eq "amiga") {
+    Copy-Item -Force -Path "$PWD\build\winuae-5.0.0\game.uae" -Destination "$PWD\build\$Name" -ErrorAction Stop
+    $UAEContent = [System.IO.File]::ReadAllText("$PWD\build\winuae-5.0.0\game.uae")
+    $UAEContent = $UAEContent.Replace("/*path*/", "$env:TEMP\$Name")
+    $UAEContent = $UAEContent.Replace("/*file*/", "$romFileName")
+    [System.IO.File]::WriteAllText("$PWD\build\$Name\game.uae", $UAEContent)
+
+    # $NSIcontent = $NSIcontent.Replace("/*exec*/", "winuae64.exe -f $env:TEMP\$Name\game.uae -cfgparam gfx_fullscreen_amiga=true")
+    $NSIcontent = $NSIcontent.Replace("/*exec*/", "winuae64.exe -f $env:TEMP\$Name\game.uae")
+  }
+
   $NSIcontent = $NSIcontent.Replace("/*rom*/", "$romFileName")
   [System.IO.File]::WriteAllText($NSIFile, $NSIcontent)
 }
@@ -169,9 +236,10 @@ function Main {
 
   $cwd = Resolve-Path -Path "."
 
-  if ($Arch -eq "gba") { $template = Join-Path -Path $cwd -ChildPath "script\template-mgba.nsi" }
-  if ($Arch -eq "nes") { $template = Join-Path -Path $cwd -ChildPath "script\template-nestopia.nsi" }
-  if ($Arch -eq "snes") { $template = Join-Path -Path $cwd -ChildPath "script\template-snes9x.nsi" }
+  if ($Arch -eq "gba") { $template = Join-Path -Path $cwd -ChildPath "script\nsi\template-mgba.nsi" }
+  if ($Arch -eq "nes") { $template = Join-Path -Path $cwd -ChildPath "script\nsi\template-nestopia.nsi" }
+  if ($Arch -eq "snes") { $template = Join-Path -Path $cwd -ChildPath "script\nsi\template-snes9x.nsi" }
+  if ($Arch -eq "amiga") { $template = Join-Path -Path $cwd -ChildPath "script\nsi\template-amiga.nsi" }
 
   $makensis = Join-Path -Path $cwd -ChildPath "build\nsis-3.08\makensis.exe"
 
@@ -186,6 +254,7 @@ function Main {
   if ($Arch -eq "gba") { Install-mGBA -WorkingPath $(Join-Path $cwd "build") }
   if ($Arch -eq "nes") { Install-Nestopia -WorkingPath $(Join-Path $cwd "build") }
   if ($Arch -eq "snes") { Install-Snes9x -WorkingPath $(Join-Path $cwd "build") }
+  if ($Arch -eq "amiga") { Install-WinUAE -WorkingPath $(Join-Path $cwd "build") }
 
   if (-Not(Test-Path -Path $(Join-Path -Path $cwd -ChildPath "build\$name"))) { New-Item -Path $(Join-Path -Path $cwd -ChildPath "build\$name") -ItemType Directory -Force }
   if (-Not(Test-Path -Path $inputFile)) {
@@ -203,6 +272,9 @@ function Main {
     if ($Arch -eq "nes") {
       Embed-Config -EmulatorExe "$cwd\build\nestopia\nestopia.exe" -ConfigFile "$cwd\build\nestopia\nestopia.xml" -DestinationPath "$cwd\build\$name"
     }
+    if ($Arch -eq "amiga") {
+      Embed-Config -EmulatorExe "$cwd\build\winuae-5.0.0\winuae64.exe" -ConfigFile "$cwd\build\winuae-5.0.0\game.uae" -DestinationPath "$cwd\build\$name"
+    }
   }
 
   Write-NSI -Arch $Arch -NSIFile $nsiFile -template $template -Input $inputFile -Output $outputFile
@@ -211,11 +283,15 @@ function Main {
 
 $version = "1.0.0-develop"
 
-Write-Host $version
-Write-Host $PWD
-Write-Host $Name
-Write-Host $In
-Write-Host $Out
-Write-Host $Arch
+Write-Host "pwd : $PWD"
+Write-Host "version : $version"
+Write-Host "in : $In"
+Write-Host "out : $Out"
+
+$Arch = Get-Arch -File $In -ForceArch $ForceArch
+Write-Host "arch : $Arch"
+
+$Name = Get-Name -File $In
+Write-Host "name : $Name"
 
 Main -Name $Name -In $In -Out $Out -Arch $Arch

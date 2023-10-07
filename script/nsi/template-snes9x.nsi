@@ -13,15 +13,17 @@ ShowInstDetails nevershow
 SilentInstall normal
 OutFile "/*output*/"
 InstallDir "$TEMP\${packageName}"
-Icon "..\..\ico\default-gba.ico"
-BrandingText "Created with Retro Win Packer /*version*/"
+Icon "..\..\ico\default-snes.ico"
+BrandingText "Created with Retro Game Win Packer /*version*/"
 AutocloseWindow True
 
 Section "install"
-  SetOutPath $InstDir
+  SetOutPath $InstDir\Roms
   File "/*rom*/"
-  File "..\mgba\mGBA.exe"
-  File "config.ini"
-  File "..\mgba\portable.ini"
+
+  SetOutPath $InstDir
+  File "snes9x.conf"
+  File "..\snes9x\snes9x-x64.exe"
+
   Exec '/*exec*/'
 SectionEnd
