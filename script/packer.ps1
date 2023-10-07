@@ -1,5 +1,4 @@
 param(
-  [Parameter(Mandatory=$true)][string] $Name,
   [Parameter(Mandatory=$true)][string] $In,
   [Parameter(Mandatory=$true)][string] $Out,
   [string] $ForceArch,
@@ -120,6 +119,14 @@ function Install-WinUAE {
   }
 }
 
+function Get-Name {
+  Param(
+    [Parameter(Mandatory=$true)][string] $File
+  )
+  $name = (Split-Path -Path $File -Leaf).Split(".")[0]
+  return $name
+}
+
 function Get-Arch {
   Param(
     [Parameter(Mandatory=$true)][string] $File,
@@ -129,7 +136,6 @@ function Get-Arch {
   if ($ForceArch) { return $ForceArch }
 
   $ext = (Split-Path -Path $In -Leaf).Split(".")[1]
-  Write-Host $ext
   switch ($ext) {
     "adf" { return "amiga"; break }
     "gba" { return "gba"; break }
@@ -275,13 +281,15 @@ function Main {
 
 $version = "1.0.0-develop"
 
-Write-Host $version
-Write-Host $PWD
-Write-Host $Name
-Write-Host $In
-Write-Host $Out
+Write-Host "pwd : $PWD"
+Write-Host "version : $version"
+Write-Host "in : $In"
+Write-Host "out : $Out"
 
 $Arch = Get-Arch -File $In -ForceArch $ForceArch
-Write-Host $Arch
+Write-Host "arch : $Arch"
+
+$Name = Get-Name -File $In
+Write-Host "name : $Name"
 
 Main -Name $Name -In $In -Out $Out -Arch $Arch

@@ -11,7 +11,6 @@ Download or clone this repository.
 
 ### Parameters
 
-- **Name**: The name of the game.
 - **In**: The input file or path to the game ROM.
 - **Out**: The output file or path for the standalone executable.
 - **Configure**: (optional) A switch to embed configuration settings.
@@ -31,5 +30,5 @@ The script remains in a "waiting" state, not proceeding further until the user c
 
 Run the following command to build your ROM:
 ```cmd
-pack -Name "Castlevania - Circle of the Moon" -In "c:\rom\gba\castlevania-circle-of-the-moon.gba" -Out "c:\rom\win-standalone\castlevania-circle-of-the-moon.exe"
+pack -In "c:\rom\gba\castlevania-circle-of-the-moon.gba" -Out "c:\rom\win-standalone\castlevania-circle-of-the-moon.exe"
 ```
