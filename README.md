@@ -2,7 +2,7 @@
 ![](https://i.ibb.co/jVHbc1G/retro-game-winpacker.png)
 
 This script simplifies the creation of standalone executable files for retro game emulation.  
-It is designed for the context of retro gaming, where an emulator is embedded within a standalone Windows executable for a seamless gaming experience.
+It is designed for the context of retro gaming, where an emulator is embedded within a standalone Windows executable.
 
 
 ## SetUp  
@@ -33,4 +33,4 @@ Run the following command to build your ROM:
 pack -Arch gba -Name "Castlevania - Circle of the Moon" -In "c:\rom\gba\castlevania-circle-of-the-moon.gba" -Out "c:\rom\win-standalone\castlevania-circle-of-the-moon.exe"
 ```
 
-Arch can be nes, snes, gba
+Arch can be nes, snes, gba, amiga
