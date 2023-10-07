@@ -110,6 +110,7 @@ function Install-WinUAE {
     Expand-Archive "$WorkingPath\download\amiga-kick.zip" "$WorkingPath\download" -Force
     Copy-Item -Path "$WorkingPath\download\Amiga kick13.rom" -Destination "$WorkingPath\winuae-5.0.0" -Force
     Copy-Item -Path "$WorkingPath\download\game.uae" -Destination "$WorkingPath\winuae-5.0.0" -Force
+
     $UAEConfigFile = "$WorkingPath\winuae-5.0.0\game.uae"
     $UAEContent = [System.IO.File]::ReadAllText($UAEConfigFile)
     $UAEContent = $UAEContent.Replace("gfx_fullscreen_amiga=false", "gfx_fullscreen_amiga=true")
@@ -208,6 +209,7 @@ function Write-NSI {
     $UAEContent = $UAEContent.Replace("/*file*/", "$romFileName")
     [System.IO.File]::WriteAllText("$PWD\build\$Name\game.uae", $UAEContent)
 
+    # $NSIcontent = $NSIcontent.Replace("/*exec*/", "winuae64.exe -f $env:TEMP\$Name\game.uae -cfgparam gfx_fullscreen_amiga=true")
     $NSIcontent = $NSIcontent.Replace("/*exec*/", "winuae64.exe -f $env:TEMP\$Name\game.uae")
   }
 
