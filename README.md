@@ -11,11 +11,12 @@ Download or clone this repository.
 
 ### Parameters
 
-- **Arch**: The video game system to target
 - **Name**: The name of the game.
 - **In**: The input file or path to the game ROM.
 - **Out**: The output file or path for the standalone executable.
-- **Configure**: A switch to embed configuration settings (optional).
+- **Configure**: (optional) A switch to embed configuration settings.
+- **ForceArch**: (optional) By default the target system is defined by the file extension (.adf, .nes, .sfc, .gba) but you can force the video game system if needed.  
+  value can be : nes, snes, gba, amiga
 
 The Configure switch is an optional feature in the script.  
 When activated, it includes emulator configuration settings in the standalone executable.  
@@ -30,7 +31,5 @@ The script remains in a "waiting" state, not proceeding further until the user c
 
 Run the following command to build your ROM:
 ```cmd
-pack -Arch gba -Name "Castlevania - Circle of the Moon" -In "c:\rom\gba\castlevania-circle-of-the-moon.gba" -Out "c:\rom\win-standalone\castlevania-circle-of-the-moon.exe"
+pack -Name "Castlevania - Circle of the Moon" -In "c:\rom\gba\castlevania-circle-of-the-moon.gba" -Out "c:\rom\win-standalone\castlevania-circle-of-the-moon.exe"
 ```
-
-Arch can be nes, snes, gba, amiga

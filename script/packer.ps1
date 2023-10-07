@@ -2,7 +2,7 @@ param(
   [Parameter(Mandatory=$true)][string] $Name,
   [Parameter(Mandatory=$true)][string] $In,
   [Parameter(Mandatory=$true)][string] $Out,
-  [Parameter(Mandatory=$true)][string] $Arch,
+  [string] $ForceArch,
   [switch] $Configure
 )
 
@@ -117,6 +117,24 @@ function Install-WinUAE {
     $UAEContent = $UAEContent.Replace("gfx_width_fullscreen=800", "gfx_width_fullscreen=1024")
     $UAEContent = $UAEContent.Replace("gfx_height_fullscreen=600", "gfx_height_fullscreen=768")
     [System.IO.File]::WriteAllText($UAEConfigFile, $UAEContent)
+  }
+}
+
+function Get-Arch {
+  Param(
+    [Parameter(Mandatory=$true)][string] $File,
+    [string] $ForceArch
+  )
+
+  if ($ForceArch) { return $ForceArch }
+
+  $ext = (Split-Path -Path $In -Leaf).Split(".")[1]
+  Write-Host $ext
+  switch ($ext) {
+    "adf" { return "amiga"; break }
+    "gba" { return "gba"; break }
+    "sfc" { return "snes"; break }
+    "nes" { return "nes"; break }
   }
 }
 
@@ -262,6 +280,8 @@ Write-Host $PWD
 Write-Host $Name
 Write-Host $In
 Write-Host $Out
+
+$Arch = Get-Arch -File $In -ForceArch $ForceArch
 Write-Host $Arch
 
 Main -Name $Name -In $In -Out $Out -Arch $Arch
