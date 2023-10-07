@@ -210,10 +210,10 @@ function Main {
 
   $cwd = Resolve-Path -Path "."
 
-  if ($Arch -eq "gba") { $template = Join-Path -Path $cwd -ChildPath "script\template-mgba.nsi" }
-  if ($Arch -eq "nes") { $template = Join-Path -Path $cwd -ChildPath "script\template-nestopia.nsi" }
-  if ($Arch -eq "snes") { $template = Join-Path -Path $cwd -ChildPath "script\template-snes9x.nsi" }
-  if ($Arch -eq "amiga") { $template = Join-Path -Path $cwd -ChildPath "script\template-amiga.nsi" }
+  if ($Arch -eq "gba") { $template = Join-Path -Path $cwd -ChildPath "script\nsi\template-mgba.nsi" }
+  if ($Arch -eq "nes") { $template = Join-Path -Path $cwd -ChildPath "script\nsi\template-nestopia.nsi" }
+  if ($Arch -eq "snes") { $template = Join-Path -Path $cwd -ChildPath "script\nsi\template-snes9x.nsi" }
+  if ($Arch -eq "amiga") { $template = Join-Path -Path $cwd -ChildPath "script\nsi\template-amiga.nsi" }
 
   $makensis = Join-Path -Path $cwd -ChildPath "build\nsis-3.08\makensis.exe"
 
