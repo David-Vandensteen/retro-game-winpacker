@@ -14,7 +14,7 @@ SilentInstall normal
 OutFile "/*output*/"
 InstallDir "$TEMP\${packageName}"
 Icon "..\..\ico\default-nes.ico"
-BrandingText "Created with Retro Win Packer /*version*/"
+BrandingText "Created with Retro Game Win Packer /*version*/"
 AutocloseWindow True
 
 Section "install"
