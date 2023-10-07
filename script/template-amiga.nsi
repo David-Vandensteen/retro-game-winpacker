@@ -13,7 +13,7 @@ ShowInstDetails nevershow
 SilentInstall normal
 OutFile "/*output*/"
 InstallDir "$TEMP\${packageName}"
-Icon "..\..\ico\default-gba.ico"
+Icon "..\..\ico\default-amiga.ico"
 BrandingText "Created with Retro Win Packer /*version*/"
 AutocloseWindow True
 

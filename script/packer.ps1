@@ -114,6 +114,8 @@ function Install-WinUAE {
     $UAEConfigFile = "$WorkingPath\winuae-5.0.0\game.uae"
     $UAEContent = [System.IO.File]::ReadAllText($UAEConfigFile)
     $UAEContent = $UAEContent.Replace("gfx_fullscreen_amiga=false", "gfx_fullscreen_amiga=true")
+    $UAEContent = $UAEContent.Replace("gfx_width_fullscreen=800", "gfx_width_fullscreen=1024")
+    $UAEContent = $UAEContent.Replace("gfx_height_fullscreen=600", "gfx_height_fullscreen=768")
     [System.IO.File]::WriteAllText($UAEConfigFile, $UAEContent)
   }
 }
@@ -129,7 +131,12 @@ function Embed-Config {
   Write-Host "Your configured settings will be embedded in the standalone file." -ForegroundColor blue
   Write-Host "----------------------------------------------------------------------" -ForegroundColor blue
   Write-Host "emulator : $EmulatorExe"
-  Start-Process -NoNewWindow -FilePath $EmulatorExe -Wait -ErrorAction Stop
+  if ($Arch -eq "amiga") {
+    # Start-Process -NoNewWindow -FilePath $EmulatorExe -ArgumentList "$ConfigFile" -Wait -ErrorAction Stop
+    Start-Process -NoNewWindow -FilePath notepad -ArgumentList "$ConfigFile" -Wait -ErrorAction Stop
+  } else {
+    Start-Process -NoNewWindow -FilePath $EmulatorExe -Wait -ErrorAction Stop
+  }
   Copy-Item -Force -Path $ConfigFile -Destination $DestinationPath -ErrorAction Stop
 }
 
@@ -221,7 +228,7 @@ function Main {
   if ($Arch -eq "gba") { Install-mGBA -WorkingPath $(Join-Path $cwd "build") }
   if ($Arch -eq "nes") { Install-Nestopia -WorkingPath $(Join-Path $cwd "build") }
   if ($Arch -eq "snes") { Install-Snes9x -WorkingPath $(Join-Path $cwd "build") }
-  if ($Arch -eq "amiga") { Install-WinUAE -WorkingPath $(Join-Path $cwd "build"); pause }
+  if ($Arch -eq "amiga") { Install-WinUAE -WorkingPath $(Join-Path $cwd "build") }
 
   if (-Not(Test-Path -Path $(Join-Path -Path $cwd -ChildPath "build\$name"))) { New-Item -Path $(Join-Path -Path $cwd -ChildPath "build\$name") -ItemType Directory -Force }
   if (-Not(Test-Path -Path $inputFile)) {
@@ -238,6 +245,9 @@ function Main {
     }
     if ($Arch -eq "nes") {
       Embed-Config -EmulatorExe "$cwd\build\nestopia\nestopia.exe" -ConfigFile "$cwd\build\nestopia\nestopia.xml" -DestinationPath "$cwd\build\$name"
+    }
+    if ($Arch -eq "amiga") {
+      Embed-Config -EmulatorExe "$cwd\build\winuae-5.0.0\winuae64.exe" -ConfigFile "$cwd\build\winuae-5.0.0\game.uae" -DestinationPath "$cwd\build\$name"
     }
   }
 
