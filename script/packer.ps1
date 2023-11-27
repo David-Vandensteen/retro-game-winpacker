@@ -72,6 +72,18 @@ function Install-Nestopia {
   }
 }
 
+function Install-PCSX2 {
+  Param([Parameter(Mandatory=$true)][string] $WorkingPath)
+  $urlPCSX2 = "http://azertyvortex.free.fr/download//PCSX2-1.6.0.zip"
+
+  Write-Folders -Path $WorkingPath
+  if (-Not(Test-Path -Path "$WorkingPath\pcsx2")) {
+    downloadHttp $urlPCSX2 "$WorkingPath\download"
+    New-Item -Path "$WorkingPath\pcsx2" -ItemType Directory -Force
+    Expand-Archive "$WorkingPath\download\PCSX2-1.6.0.zip" "$WorkingPath\pcsx2"
+  }
+}
+
 function Install-Snes9x {
   Param([Parameter(Mandatory=$true)][string] $WorkingPath)
   $urlSnes9x = "https://dl.emulator-zone.com/download.php/emulators/snes/snes9x/snes9x-1.62.3-win32-x64.zip"
